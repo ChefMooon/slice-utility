@@ -1,5 +1,5 @@
 # slice utility
-A plugin to manage slices
+An Aseprite plugin to manage slices
 
 
 ## Features
