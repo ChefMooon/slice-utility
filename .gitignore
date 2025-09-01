@@ -1,0 +1,7 @@
+
+.vscode/
+
+*.zip
+
+build/
+*.aseprite-extension
