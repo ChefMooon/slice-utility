@@ -14,7 +14,7 @@ function func.export_all_slices()
     local datetime = os.date("%Y-%m-%d_%H-%M-%S")
 
     -- Create subfolder name
-    local subfolder = sprite_name .. "-" .. datetime
+    local subfolder = sprite_name
     local export_folder = app.fs.joinPath(folder, subfolder)
 
     local function makeDirectory(path)
@@ -38,6 +38,11 @@ function func.export_all_slices()
                 selected=true
             }
             :check{
+                id="create_subfolder_date",
+                label="Create Subfolder with Date/Time",
+                selected=true
+            }
+            :check{
                 id="selection_only",
                 label="Selection Only",
                 selected=false
@@ -54,6 +59,9 @@ function func.export_all_slices()
 
     local export_path = folder
     if data.create_subfolder then
+        if data.create_subfolder_date then
+            subfolder = sprite_name .. "-" .. datetime
+        end
         export_path = app.fs.joinPath(folder, subfolder)
     end
     makeDirectory(export_path)
