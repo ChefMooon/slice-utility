@@ -1,6 +1,5 @@
 # slice utility
-An Aseprite plugin to manage slices
-
+This Aseprite extension was created to streamline creating individual assets from a single large canvas.
 
 ## Features
 - Export All Slices: Exports all defined slices to a specified folder. 
