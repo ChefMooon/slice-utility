@@ -1,6 +1,6 @@
 local func = {}
 
-function func.export_all_slices()
+function func.export_slices()
     local spr = app.activeSprite
     if not spr then return print('No active sprite') end
 

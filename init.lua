@@ -18,11 +18,11 @@ function init(plugin)
 
   -- Export slice command, opens popup
   plugin:newCommand{
-    id="export_all_slices",
+    id="export_slices",
     title="Export Slices...",
     group="slice_utility",
     onclick=function()
-      slice_utility.export_all_slices()
+      slice_utility.export_slices()
     end
   }
 
