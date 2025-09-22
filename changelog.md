@@ -4,6 +4,7 @@
 
 ### Changed
 - Export All Slices label updated -> Export Slices...
+- Update exit message
 
 ## v0.1
 

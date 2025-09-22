@@ -37,5 +37,5 @@ function init(plugin)
 end
 
 function exit(plugin)
-  print("Aseprite is closing Slice Utility")
+  print("Slice Utility successfully removed")
 end
