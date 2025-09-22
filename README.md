@@ -2,10 +2,6 @@
 
 This Aseprite extension was created to streamline creating individual assets from a single large canvas.
 
-<p align="center">
-  <img src="img/v0.2.png" alt="Slice Utility Screenshot">
-</p>
-
 ## Features
 - Export All Slices: Exports all defined slices to a specified folder.
 	- By default creates a subfolder with origin sprite name and datetime. (can be disabled)
@@ -20,3 +16,17 @@ This Aseprite extension was created to streamline creating individual assets fro
 - Update Slice Data: Updates slice data within the selected area
 	- Color
 	- User Data
+
+## Screenshots
+
+**Export Slices**
+
+<p align="center">
+  <img src="img/v0.2_export_slices.png" alt="Slice Utility - Export Slices">
+</p>
+
+**Update Slice Data**
+
+<p align="center">
+  <img src="img/v0.2_update_data.png" alt="Slice Utility - Update Slice Data">
+</p>
