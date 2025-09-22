@@ -19,7 +19,7 @@ function init(plugin)
   -- Export slice command, opens popup
   plugin:newCommand{
     id="export_all_slices",
-    title="Export All Slices",
+    title="Export Slices...",
     group="slice_utility",
     onclick=function()
       slice_utility.export_all_slices()
