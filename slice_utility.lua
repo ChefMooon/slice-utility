@@ -47,6 +47,12 @@ function func.export_slices()
                 label="Selection Only",
                 selected=false
             }
+            :combobox{
+                id="resize",
+                label="Resize:",
+                option="100%",
+                options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
+            }
             :button{ id="export", text="Export" }
             :button{ id="cancel", text="Cancel" }
             :show().data
@@ -78,6 +84,10 @@ function func.export_slices()
         end
     end
 
+    -- Determine resize factor
+    local resize_factor = tonumber(data.resize:sub(1, -2)) / 100
+
+    -- Loop through slices and export
     local exported_count = 0
     for i, slice in ipairs(spr.slices) do
         local bounds = slice.bounds
@@ -107,6 +117,13 @@ function func.export_slices()
 
         -- Crop new sprite to slice selection
         slice_spr:crop(bounds.x, bounds.y, bounds.width, bounds.height)
+
+        -- Resize if needed
+        if resize_factor ~= 1 then
+            local new_width = math.max(1, math.floor(bounds.width * resize_factor + 0.5))
+            local new_height = math.max(1, math.floor(bounds.height * resize_factor + 0.5))
+            slice_spr:resize(new_width, new_height)
+        end
 
         -- Save the new sprite
         slice_spr:saveAs(filename)
