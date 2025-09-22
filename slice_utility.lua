@@ -19,7 +19,7 @@ function func.export_slices()
 
     local function makeDirectory(path)
         if not app.fs.isDirectory(path) then
-            app.fs.makeDirectory(path)
+            app.fs.makeDirectory(path) 
         end
     end
 
@@ -53,6 +53,7 @@ function func.export_slices()
                 option="100%",
                 options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
             }
+            :separator{}
             :button{ id="export", text="Export" }
             :button{ id="cancel", text="Cancel" }
             :show().data
@@ -63,6 +64,7 @@ function func.export_slices()
         return
     end
 
+    -- Determine final export path
     local export_path = folder
     if data.create_subfolder then
         if data.create_subfolder_date then
@@ -70,6 +72,24 @@ function func.export_slices()
         end
         export_path = app.fs.joinPath(folder, subfolder)
     end
+
+    -- Check if export folder exists and prompt user
+    if app.fs.isDirectory(export_path) then
+        local dlg = Dialog("Folder Exists")
+        dlg:label{label="The export folder already exists."}
+        dlg:label{label="Do you want to overwrite its contents?"}
+        dlg:separator{}
+        dlg:button{id="yes", text="Yes"}
+        dlg:button{id="no", text="No"}
+        dlg:show()
+        local result = dlg.data
+        if not result.yes then
+            app.alert("Export cancelled.")
+            return
+        end
+    end
+
+    -- Create export directory if it doesn't exist
     makeDirectory(export_path)
 
     -- Get selection bounds if needed

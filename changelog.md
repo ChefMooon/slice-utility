@@ -8,6 +8,7 @@
 ### Changed
 - Export All Slices label updated -> Export Slices...
 - Update exit message
+- Will prompt decision before overwriting a folder
 
 ## v0.1
 
