@@ -28,7 +28,7 @@ function init(plugin)
 
   plugin:newCommand{
     id="update_slice_data",
-    title="Update Slice Data",
+    title="Update Slice Data...",
     group="slice_utility",
     onclick=function()
       slice_utility.update_slices()
