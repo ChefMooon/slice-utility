@@ -1,7 +1,7 @@
 local func = {}
 
 function func.export_slices()
-    local spr = app.activeSprite
+    local spr = app.sprite
     if not spr then return print('No active sprite') end
 
     local full_path = spr.filename
@@ -155,6 +155,9 @@ function func.export_slices()
 
         ::continue::
     end
+
+    -- Refocus on the original sprite
+    app.sprite = spr
 
     app.alert("Exported " .. exported_count .. " slices to " .. export_path)
 end

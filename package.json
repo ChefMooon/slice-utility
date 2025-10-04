@@ -2,7 +2,7 @@
   "name": "slice-utility",
   "displayName": "Slice Utility",
   "description": "A plugin to manage slices",
-  "version": "0.2",
+  "version": "0.3",
   "author": { "name": "ChefMooon",
               "email": "jpindiedev@gmail.com",
               "url": "https://chefmooon.github.io" },
