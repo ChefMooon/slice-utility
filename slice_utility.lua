@@ -40,7 +40,7 @@ function func.export_slices()
             :check{
                 id="create_subfolder_date",
                 label="Create Subfolder with Date/Time",
-                selected=true
+                selected=false
             }
             :check{
                 id="selection_only",
