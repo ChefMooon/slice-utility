@@ -1,7 +1,6 @@
 
 local util = {}
 
-
 --- Creates a directory at the specified path if it does not already exist.
 -- Checks if the directory exists using app.fs.isDirectory, and creates it with app.fs.makeDirectory if not present.
 -- TODO: make more robust, add tests, handle errors, etc.
@@ -92,6 +91,19 @@ function util.find_lowest_increment(t, key)
         end
     end
     return max + 1
+end
+
+--- Compares two color tables for equality.
+-- Returns true if all RGBA components (red, green, blue, alpha) are equal.
+--
+-- @param color1 First color table with fields: red, green, blue, alpha.
+-- @param color2 Second color table with fields: red, green, blue, alpha.
+-- @return true if all components are equal, false otherwise.
+function util.equal_colors(color1, color2)
+    return color1.red == color2.red and
+           color1.green == color2.green and
+           color1.blue == color2.blue and
+           color1.alpha == color2.alpha
 end
 
 return util

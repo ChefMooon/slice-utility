@@ -1,5 +1,6 @@
-
 local util = require("util")
+
+local default_color = app.preferences.slices.default_color -- Stores default on startup
 
 ------------------Dialogs Start------------------
 
@@ -38,9 +39,48 @@ export_dialog
         export_dialog:close()
     end }
 
+    -- Popup dialog for user data input, color, and clear button
+local update_slices_dialog = Dialog("Set/Clear User Data & Color")
+update_slices_dialog
+    :color{
+        id = "slice_color",
+        label = "Slice Color:",
+        color = default_color
+    }
+    :entry{
+        id = "user_data",
+        label = "User Data:",
+        text = "",
+        focus = true
+    }
+    :button{
+        id = "ok",
+        text = "Set Data",
+        onclick = function()
+            SetData()
+        end
+    }
+    :button{
+        id = "clear",
+        text = "Clear Data",
+        onclick = function()
+            ClearData()
+        end
+    }
+    :button{
+        id = "cancel",
+        text = "Cancel",
+        onclick = function()
+            update_slices_dialog:close()
+        end
+    }
 
 ------------------Dialogs End------------------
 
+------------------Slice Utility Main Functions Start------------------
+
+-- This function is called when the "Export" button is clicked in the export_dialog
+-- It will loop through all slices in the current sprite and export them as individual PNG files
 function Export()
     local data = export_dialog.data
     local spr = app.sprite
@@ -190,97 +230,19 @@ function Export()
     app.alert("Exported " .. exported_count .. " slices to " .. export_path)
 end
 
-------------------Slice Utility Main Functions------------------
+-- This function is called when the "Set Data" button is clicked in the update_slices_dialog
+-- It will set the user data and/or color for all slices within the current selection
+function SetData()
+    local sprite = app.sprite
+    local sel_bounds = sprite.selection.bounds
 
-local func = {}
-
-function func.export_slices()
-    local spr = app.sprite
-    if not spr then return app.alert('No active sprite') end
-    export_dialog:modify {
-        id = "user_value",
-        text = app.fs.filePath(spr.filename) or ""
-    }
-    
-    export_dialog:show()
-end
-
-function func.update_slices()
-    local spr = app.activeSprite
-    if not spr then return app.alert('No active sprite') end
-
-    -- Get selection bounds
-    local sel = spr.selection
-    if not sel or sel.isEmpty then
-        return app.alert("No selection area found.")
-    end
-    local sel_bounds = sel.bounds
-
-    -- Default color for comparison
-    local default_color = Color{ r=255, g=255, b=255, a=255 }
-
-    -- Popup dialog for user data input, color, and clear button
-    local dlg = Dialog("Set/Clear User Data & Color")
-    dlg:color{
-        id = "slice_color",
-        label = "Slice Color:",
-        color = default_color
-    }
-    dlg:entry{
-        id = "user_data",
-        label = "User Data:",
-        text = "",
-        focus = true
-    }
-    dlg:button{
-        id = "ok",
-        text = "Set Data",
-        focus = true
-    }
-    dlg:button{
-        id = "clear",
-        text = "Clear Data"
-    }
-    dlg:button{
-        id = "cancel",
-        text = "Cancel"
-    }
-    dlg:show()
-
-    local data = dlg.data
-
-    if data.clear then
-        -- Clear user data and color from all slices in selection
-        local count = 0
-        for i, slice in ipairs(spr.slices) do
-            local bounds = slice.bounds
-            if bounds.x >= sel_bounds.x and
-               bounds.y >= sel_bounds.y and
-               bounds.x + bounds.width <= sel_bounds.x + sel_bounds.width and
-               bounds.y + bounds.height <= sel_bounds.y + sel_bounds.height then
-                slice.data = ""
-                slice.color = default_color
-                count = count + 1
-            end
-        end
-        app.alert("Cleared user data and reset color for " .. count .. " slice(s) in selection.")
-        return
-    end
-
-    if not data.ok then
-        return -- Cancelled
-    end
+    local data = update_slices_dialog.data
 
     local user_data = data.user_data
     local slice_color = data.slice_color
 
     -- Check if color has been changed from default
-    local color_changed = not (
-        slice_color.red == default_color.red and
-        slice_color.green == default_color.green and
-        slice_color.blue == default_color.blue and
-        slice_color.alpha == default_color.alpha
-    )
+    local color_changed = not util.equal_colors(slice_color, default_color)
 
     if (not user_data or user_data == "") and not color_changed then
         app.alert("Please enter User Data or select a Slice Color.")
@@ -291,7 +253,7 @@ function func.update_slices()
     local count = 0
     local updated_user_data = false
     local updated_color = false
-    for i, slice in ipairs(spr.slices) do
+    for i, slice in ipairs(sprite.slices) do
         local bounds = slice.bounds
         if bounds.x >= sel_bounds.x and
            bounds.y >= sel_bounds.y and
@@ -319,6 +281,69 @@ function func.update_slices()
     end
     msg = msg .. " for " .. count .. " slice(s) in selection."
     app.alert(msg)
+    update_slices_dialog:close() -- Close the dialog to apply changes
+end
+
+-- This function is called when the "Clear Data" button is clicked in the update_slices_dialog
+-- It will reset the user data and color for all slices within the current selection
+function ClearData()
+    local sprite = app.sprite
+    local sel_bounds = sprite.selection.bounds
+
+    local count = 0
+    for i, slice in ipairs(sprite.slices) do
+        local bounds = slice.bounds
+        if bounds.x >= sel_bounds.x and
+            bounds.y >= sel_bounds.y and
+            bounds.x + bounds.width <= sel_bounds.x + sel_bounds.width and
+            bounds.y + bounds.height <= sel_bounds.y + sel_bounds.height then
+            slice.data = ""
+            slice.color = default_color
+            count = count + 1
+        end
+    end
+    update_slices_dialog:close() -- Close the dialog to apply changes
+    app.alert("Cleared user data and reset color for " .. count .. " slice(s) in selection.")
+end
+
+------------------Slice Utility Main Functions End------------------
+
+------------------Slice Utility Command Functions------------------
+
+local func = {}
+
+function func.export_slices()
+    local sprite = app.sprite
+    if not sprite then return app.alert('No active sprite') end
+    export_dialog:modify {
+        id = "user_value",
+        text = app.fs.filePath(sprite.filename) or ""
+    }
+    
+    export_dialog:show()
+end
+
+function func.update_slices()
+    local sprite = app.sprite
+    if not sprite then return app.alert('No active sprite') end
+
+    -- Check if there is a selection and alert if not
+    local sel = sprite.selection
+    if not sel or sel.isEmpty then
+        return app.alert("No selection area found.")
+    end
+
+    -- Checks if default color has changed since plugin loading/application start and updates dialog color if so
+    local default_color_check = app.preferences.slices.default_color
+    if not util.equal_colors(default_color_check, default_color) then
+        default_color = default_color_check
+        update_slices_dialog:modify {
+            id = "slice_color",
+            color = default_color
+        }
+    end
+
+    update_slices_dialog:show()
 end
 
 return func

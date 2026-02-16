@@ -2,6 +2,9 @@
 
 ## v0.4
 
+### Changed
+- "Update Slice Data..." now uses application default slice color
+
 ### Fixed
 - No longer overwites slices with the same name
 

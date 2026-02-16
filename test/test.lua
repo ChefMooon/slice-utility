@@ -127,6 +127,57 @@ function TestGetExportData_NonNumericSuffix()
     lu.assertEquals(result, { key = "block/yellow_a", path = "block/yellow_a", increment = 0 })
 end
 
+--- Tests for util.equal_colors ---
+
+-- Should return true for identical color tables
+function TestEqualColors_Identical()
+    local c1 = { red = 255, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 255, green = 128, blue = 64, alpha = 255 }
+    lu.assertTrue(util.equal_colors(c1, c2))
+end
+
+-- Should return false for different red component
+function TestEqualColors_DifferentRed()
+    local c1 = { red = 100, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 101, green = 128, blue = 64, alpha = 255 }
+    lu.assertFalse(util.equal_colors(c1, c2))
+end
+
+-- Should return false for different green component
+function TestEqualColors_DifferentGreen()
+    local c1 = { red = 100, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 100, green = 129, blue = 64, alpha = 255 }
+    lu.assertFalse(util.equal_colors(c1, c2))
+end
+
+-- Should return false for different blue component
+function TestEqualColors_DifferentBlue()
+    local c1 = { red = 100, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 100, green = 128, blue = 65, alpha = 255 }
+    lu.assertFalse(util.equal_colors(c1, c2))
+end
+
+-- Should return false for different alpha component
+function TestEqualColors_DifferentAlpha()
+    local c1 = { red = 100, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 100, green = 128, blue = 64, alpha = 254 }
+    lu.assertFalse(util.equal_colors(c1, c2))
+end
+
+-- Should return true for both fully transparent black
+function TestEqualColors_TransparentBlack()
+    local c1 = { red = 0, green = 0, blue = 0, alpha = 0 }
+    local c2 = { red = 0, green = 0, blue = 0, alpha = 0 }
+    lu.assertTrue(util.equal_colors(c1, c2))
+end
+
+-- Should return false if one color is missing a component (edge case)
+function TestEqualColors_MissingComponent()
+    local c1 = { red = 100, green = 128, blue = 64, alpha = 255 }
+    local c2 = { red = 100, green = 128, blue = 64 } -- missing alpha
+    lu.assertFalse(util.equal_colors(c1, c2))
+end
+
 -- luaunit runner. Must stay at the end of the file to run tests.
 local runner = lu.LuaUnit.new()
 runner:setOutputType("text")
