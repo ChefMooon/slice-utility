@@ -1,6 +1,48 @@
-local func = {}
 
-function func.export_slices()
+local util = require("util")
+
+------------------Dialogs Start------------------
+
+local export_dialog = Dialog("Slice Export")
+export_dialog
+    :entry{ id="user_value",
+        label="Export Location:",
+        focus=true
+    }
+    :check{
+        id="create_subfolder",
+        label="Create Subfolder",
+        selected=true
+    }
+    :check{
+        id="create_subfolder_date",
+        label="Create Subfolder with Date/Time",
+        selected=false
+    }
+    :check{
+        id="selection_only",
+        label="Selection Only",
+        selected=false
+    }
+    :combobox{
+        id="resize",
+        label="Resize:",
+        option="100%",
+        options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
+    }
+    :separator{}
+    :button{ id="export", text="Export", onclick=function()
+        Export()
+    end }
+    :button{ id="cancel", text="Cancel", onclick = function()
+        export_dialog:close()
+    end }
+
+
+------------------Dialogs End------------------
+
+function Export()
+    local data = export_dialog.data
     local spr = app.sprite
     if not spr then return print('No active sprite') end
 
@@ -17,52 +59,7 @@ function func.export_slices()
     local subfolder = sprite_name
     local export_folder = app.fs.joinPath(folder, subfolder)
 
-    local function makeDirectory(path)
-        if not app.fs.isDirectory(path) then
-            app.fs.makeDirectory(path) 
-        end
-    end
-
-    local function setFolder(data)
-        folder = data
-    end
-
-    local data =
-    Dialog("Slice Export"):entry{ id="user_value",
-            label="Export Location:",
-            text=folder,
-            focus=true}
-            :check{
-                id="create_subfolder",
-                label="Create Subfolder",
-                selected=true
-            }
-            :check{
-                id="create_subfolder_date",
-                label="Create Subfolder with Date/Time",
-                selected=false
-            }
-            :check{
-                id="selection_only",
-                label="Selection Only",
-                selected=false
-            }
-            :combobox{
-                id="resize",
-                label="Resize:",
-                option="100%",
-                options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
-            }
-            :separator{}
-            :button{ id="export", text="Export" }
-            :button{ id="cancel", text="Cancel" }
-            :show().data
-
-    if data.export then
-        setFolder(data.user_value)
-    else
-        return
-    end
+    folder = data.user_value
 
     -- Determine final export path
     local export_path = folder
@@ -73,7 +70,7 @@ function func.export_slices()
         export_path = app.fs.joinPath(folder, subfolder)
     end
 
-    -- Check if export folder exists and prompt user
+    -- Check if export folder exists and prompt user TODO: extract to separate function
     if app.fs.isDirectory(export_path) then
         local dlg = Dialog("Folder Exists")
         dlg:label{label="The export folder already exists."}
@@ -90,7 +87,7 @@ function func.export_slices()
     end
 
     -- Create export directory if it doesn't exist
-    makeDirectory(export_path)
+    util.make_directory(export_path)
 
     -- Get selection bounds if needed
     local sel_bounds = nil
@@ -109,6 +106,7 @@ function func.export_slices()
 
     -- Loop through slices and export
     local exported_count = 0
+    local slice_table = {}
     for i, slice in ipairs(spr.slices) do
         local bounds = slice.bounds
 
@@ -125,12 +123,38 @@ function func.export_slices()
         end
 
         local slice_export_path = export_path
-        if slice.data ~= "" then
-            slice_export_path = app.fs.joinPath(export_path, slice.data)
-            makeDirectory(slice_export_path)
+        local slice_subfolder = slice.data
+        if slice_subfolder ~= "" then
+            slice_export_path = app.fs.joinPath(export_path, slice_subfolder)
+            util.make_directory(slice_export_path)
         end
 
-        local filename = app.fs.joinPath(slice_export_path, slice.name .. ".png")
+        local slice_name = slice.name
+        local slice_key = slice_name
+        if slice_subfolder ~= "" then
+            slice_key = slice_subfolder .. "/" .. slice.name
+        end
+
+        local export_data = util.get_export_data(slice_key)
+
+        -- Ensure the value at this key is a list (array)
+        if not slice_table[export_data.key] then
+            slice_table[export_data.key] = {}
+        end
+        
+        if util.export_is_unique(slice_table, export_data.key, export_data.path) then
+            table.insert(slice_table[export_data.key], { path = export_data.path, increment = export_data.increment })
+        else
+            local lowest_increment = util.find_lowest_increment(slice_table, export_data.key)
+            if lowest_increment > 0 then
+                slice_name = slice_name .. "_" .. tostring(lowest_increment)
+            end
+            table.insert(slice_table[export_data.key], { path = export_data.path, increment = lowest_increment })
+        end
+
+        local file_path = app.fs.joinPath(slice_export_path, slice_name)
+
+        local filename = file_path .. ".png"
 
         -- Create a new sprite from the source sprite
         local slice_spr = Sprite(spr)
@@ -159,7 +183,26 @@ function func.export_slices()
     -- Refocus on the original sprite
     app.sprite = spr
 
+    -- Close the export dialog
+    export_dialog:close()
+
+    -- Show alert with export results
     app.alert("Exported " .. exported_count .. " slices to " .. export_path)
+end
+
+------------------Slice Utility Main Functions------------------
+
+local func = {}
+
+function func.export_slices()
+    local spr = app.sprite
+    if not spr then return app.alert('No active sprite') end
+    export_dialog:modify {
+        id = "user_value",
+        text = app.fs.filePath(spr.filename) or ""
+    }
+    
+    export_dialog:show()
 end
 
 function func.update_slices()

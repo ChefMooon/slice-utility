@@ -39,3 +39,12 @@ This Aseprite extension was created to streamline creating individual assets fro
 <p align="center">
   <img src="img/v0.2_update_data.png" alt="Slice Utility - Update Slice Data">
 </p>
+
+## Details
+
+### Duplicate Slice Handling Strategy
+
+When exporting slices, the utility automatically ensures that each exported file has a unique name, even if multiple slices share the same base name or subfolder. Duplicate names are handled by appending the lowest available increment (e.g., `_1`, `_2`, etc.) to the filename, so no files are overwritten and all slices are exported safely.
+
+For a full explanation of the logic, edge cases, and implementation details, see the [Detailed Duplicate Slice Handling Documentation](docs/duplicate-slice-handling.md).
+   

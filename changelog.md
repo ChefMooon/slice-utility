@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4
+
+### Fixed
+- No longer overwites slices with the same name
+
 ## v0.3
 
 ### Fixed

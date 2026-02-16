@@ -19,6 +19,7 @@ os.makedirs(build_folder, exist_ok=True)
 files_to_zip = [
     "init.lua",
     "slice_utility.lua",
+    "util.lua",
     "package.json"
 ]
 
