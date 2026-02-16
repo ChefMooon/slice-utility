@@ -9,8 +9,11 @@
   "contributors": [ ],
   "publisher": "chefmooon",
   "license": "MIT",
-  "categories": [ "Scripts" ],
+  "categories": [ "Keys", "Scripts" ],
   "contributes": {
+    "keys": [
+      { "id": "default-keys", "path": "./default-keys.aseprite-keys" }
+    ],
     "scripts": [
         { "path": "./init.lua" }
     ]

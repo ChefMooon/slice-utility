@@ -2,6 +2,11 @@
 
 ## v0.4
 
+### Added
+- Default keyboard shortcuts:
+   - Export Slices -> Ctrl+Shift+E
+   - Update Slice Data -> Ctrl+Shift+W
+
 ### Changed
 - "Update Slice Data..." now uses application default slice color
 

@@ -20,7 +20,8 @@ files_to_zip = [
     "init.lua",
     "slice_utility.lua",
     "util.lua",
-    "package.json"
+    "package.json",
+    "default-keys.aseprite-keys"
 ]
 
 zip_filename = f"slice_utility_v{version}.aseprite-extension"
