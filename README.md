@@ -12,13 +12,15 @@ This Aseprite extension was created to streamline creating individual assets fro
 	- Options:
 		- Create Subfolder: boolean
 		- Create Subfolder with Date/Time: boolean
-		- Selection Only: boolean
+		- Selection Only: boolean[^selection]
 		- Resize: dropdown { "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%"}
 	- Will prompt with decision to overwrite files if output folder already exists
 
 - Update Slice Data -> Updates slice data within the selected area
 	- Color
 	- User Data
+
+[^selection]: If a selection is active, this option will be enabled by default. You can manually override it to export all slices regardless of selection. A "(*)" will appear at the end of the label if there is an active selection.
 
 ## Screenshots
 

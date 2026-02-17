@@ -110,6 +110,39 @@ function Export()
         export_path = app.fs.joinPath(folder, subfolder)
     end
 
+    -- Get selection bounds if needed
+    local sel_bounds = nil
+    if data.selection_only then
+        local sel = spr.selection
+        if sel and not sel.isEmpty then
+            sel_bounds = sel.bounds
+        else
+            local retry_dlg = Dialog{ title="No Selection", notitlebar=true, resizeable=false, parent=export_dialog }
+            retry_dlg
+                :label{label="No selection area was found."}
+                :label{label="To use 'Selection Only', you must have an active selection."}
+                :separator{}
+                :label{label="Would you like to retry or cancel the export?"}
+                :button{
+                    id="retry",
+                    text="Retry",
+                    onclick=function()
+                        retry_dlg:close()
+                    end
+                }
+                :button{
+                    id="cancel",
+                    text="Cancel",
+                    onclick=function()
+                        retry_dlg:close()
+                        export_dialog:close()
+                    end
+                }
+                :show()
+            return
+        end
+    end
+
     -- Check if export folder exists and prompt user TODO: extract to separate function
     if app.fs.isDirectory(export_path) then
         local dlg = Dialog("Folder Exists")
@@ -128,18 +161,6 @@ function Export()
 
     -- Create export directory if it doesn't exist
     util.make_directory(export_path)
-
-    -- Get selection bounds if needed
-    local sel_bounds = nil
-    if data.selection_only then
-        local sel = spr.selection
-        if sel and not sel.isEmpty then
-            sel_bounds = sel.bounds
-        else
-            app.alert("No selection area found. Exporting all slices.")
-            sel_bounds = nil
-        end
-    end
 
     -- Determine resize factor
     local resize_factor = tonumber(data.resize:sub(1, -2)) / 100
@@ -319,6 +340,21 @@ function func.export_slices()
         id = "user_value",
         text = app.fs.filePath(sprite.filename) or ""
     }
+
+    -- Check if there is a selection and enable/disable "Selection Only" option accordingly
+    if sprite.selection and not sprite.selection.isEmpty then
+        export_dialog:modify {
+            id = "selection_only",
+            label="Selection Only(*)",
+            selected = true
+        }
+    else
+        export_dialog:modify {
+            id = "selection_only",
+            label="Selection Only",
+            selected = false
+        }
+    end
     
     export_dialog:show()
 end
