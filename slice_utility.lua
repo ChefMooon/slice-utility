@@ -335,6 +335,7 @@ local func = {}
 function func.export_slices()
     local sprite = app.sprite
     if not sprite then return app.alert('No active sprite') end
+    if #sprite.slices == 0 then return app.alert('No slices found in active sprite') end
     export_dialog:modify {
         id = "user_value",
         text = app.fs.filePath(sprite.filename) or ""

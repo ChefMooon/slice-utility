@@ -9,6 +9,8 @@
 
 ### Changed
 - "Update Slice Data..." now uses application default slice color
+- "Slice Export" -> "Export" button now focussed
+- Commands are now automatically disabled when their requirements are not met
 
 ### Fixed
 - No longer overwites slices with the same name

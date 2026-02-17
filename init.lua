@@ -23,6 +23,9 @@ function init(plugin)
     group="slice_utility",
     onclick=function()
       slice_utility.export_slices()
+    end,
+    onenabled=function() -- Enabled only if there's a sprite
+      return app.sprite
     end
   }
 
@@ -32,6 +35,9 @@ function init(plugin)
     group="slice_utility",
     onclick=function()
       slice_utility.update_slices()
+    end,
+    onenabled=function() -- Enabled only if there's a sprite and a selection
+      return app.sprite and app.sprite.selection and not app.sprite.selection.isEmpty
     end
   }
 end
