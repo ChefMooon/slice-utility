@@ -7,8 +7,7 @@ local default_color = app.preferences.slices.default_color -- Stores default on 
 local export_dialog = Dialog("Slice Export")
 export_dialog
     :entry{ id="user_value",
-        label="Export Location:",
-        focus=true
+        label="Export Location:"
     }
     :check{
         id="create_subfolder",
@@ -32,7 +31,7 @@ export_dialog
         options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
     }
     :separator{}
-    :button{ id="export", text="Export", onclick=function()
+    :button{ id="export", text="Export", focus=true, onclick=function()
         Export()
     end }
     :button{ id="cancel", text="Cancel", onclick = function()
