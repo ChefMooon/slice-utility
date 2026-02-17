@@ -166,6 +166,8 @@ function Export()
 
     -- Loop through slices and export
     local exported_count = 0
+    local exported_duplicates = 0
+    local exported_unique = 0
     local slice_table = {}
     for i, slice in ipairs(spr.slices) do
         local bounds = slice.bounds
@@ -204,12 +206,14 @@ function Export()
         
         if util.export_is_unique(slice_table, export_data.key, export_data.path) then
             table.insert(slice_table[export_data.key], { path = export_data.path, increment = export_data.increment })
+            exported_unique = exported_unique + 1
         else
             local lowest_increment = util.find_lowest_increment(slice_table, export_data.key)
             if lowest_increment > 0 then
                 slice_name = slice_name .. "_" .. tostring(lowest_increment)
             end
             table.insert(slice_table[export_data.key], { path = export_data.path, increment = lowest_increment })
+            exported_duplicates = exported_duplicates + 1
         end
 
         local file_path = app.fs.joinPath(slice_export_path, slice_name)
@@ -247,7 +251,19 @@ function Export()
     export_dialog:close()
 
     -- Show alert with export results
-    app.alert("Exported " .. exported_count .. " slices to " .. export_path)
+    local export_report_dialog = Dialog("Export Report")
+    export_report_dialog
+        :label{ label="Exported "..exported_count.." slices to "..export_path }
+        :label{ label="Unique slices: "..exported_unique }
+        :label{ label="Duplicate slices: "..exported_duplicates }
+        :button{
+            id = "ok",
+            text = "     OK     ",
+            onclick = function()
+                export_report_dialog:close()
+            end
+        }
+        :show()
 end
 
 -- This function is called when the "Set Data" button is clicked in the update_slices_dialog

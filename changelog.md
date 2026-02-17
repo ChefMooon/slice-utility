@@ -11,6 +11,7 @@
 - "Update Slice Data..." now uses application default slice color
 - "Slice Export" -> "Export" button now focussed
 - Commands are now automatically disabled when their requirements are not met
+- The "Export Slices" dialog now displays a clearer and more informative success message.
 
 ### Fixed
 - No longer overwites slices with the same name
