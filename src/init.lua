@@ -42,6 +42,7 @@ function init(plugin)
   }
 end
 
-function exit(plugin)
-  print("Slice Utility successfully removed")
-end
+--- This function is called when the plugin is removed/unloaded. Use in the future for cleanup if needed.
+-- function exit(plugin)
+--   print("Slice Utility successfully removed")
+-- end
