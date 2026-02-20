@@ -178,7 +178,44 @@ function TestEqualColors_MissingComponent()
     lu.assertFalse(util.equal_colors(c1, c2))
 end
 
--- luaunit runner. Must stay at the end of the file to run tests.
+
+--- Tests for util.parse_slice_data ---
+
+--- Should return nil if data is missing
+function TestParseSliceData_Nil()
+    lu.assertNil(util.parse_slice_data(nil))
+end
+
+--- Should return string if data is a plain string
+function TestParseSliceData_String()
+    lu.assertEquals(util.parse_slice_data("folder/subfolder"), "folder/subfolder")
+end
+
+--- Should return formatted table if data is a table-like string with folder and export
+function TestParseSliceData_TableString()
+    local result = util.parse_slice_data("{ folder = 'sprites', export = false }")
+    lu.assertEquals(result, { folder = "sprites", export = false })
+end
+
+--- Should default export to true if not specified in table-like string
+function TestParseSliceData_TableString_DefaultExport()
+    local result = util.parse_slice_data("{ folder = 'icons' }")
+    lu.assertEquals(result, { folder = "icons", export = true })
+end
+
+--- Should default folder to empty string if not specified in table-like string
+function TestParseSliceData_TableString_DefaultFolder()
+    local result = util.parse_slice_data("{ export = false }")
+    lu.assertEquals(result, { folder = "", export = false })
+end
+
+--- Should handle empty table-like string
+function TestParseSliceData_TableString_Empty()
+    local result = util.parse_slice_data("{}")
+    lu.assertEquals(result, { folder = "", export = true })
+end
+
+-- luaunit runner. Must stay at the end of the file to run tests. New tests go above this line.
 local runner = lu.LuaUnit.new()
 runner:setOutputType("text")
 os.exit( runner:runSuite() )

@@ -106,4 +106,40 @@ function util.equal_colors(color1, color2)
            color1.alpha == color2.alpha
 end
 
+--- Parses slice user data or export info.
+-- Accepts a string (legacy folder path or table-like string).
+-- If the string starts with '{' and ends with '}', attempts to parse it as a Lua table.
+-- If parsing succeeds, returns a table with fields:
+--   folder (string, default "")
+--   export (boolean, default true)
+-- If parsing fails or the string is not table-like, returns the string as a folder path.
+-- Returns nil if data is missing.
+--
+-- @param data The slice user data or export info to parse (string).
+-- @return Folder path string (legacy) or table { folder, export } (enhanced), or nil if invalid.
+function util.parse_slice_data(data)
+    if not data then
+        return nil
+    end
+    -- Always treat as string
+    local trimmed = data:match("^%s*(.-)%s*$")
+    if trimmed:sub(1,1) == "{" and trimmed:sub(-1,-1) == "}" then
+        local chunk, err = load("return " .. trimmed)
+        if chunk then
+            local ok, tbl = pcall(chunk)
+            if ok and type(tbl) == "table" then
+                local folder = tbl.folder or ""
+                local export = tbl.export
+                if export == nil then export = true end
+                return {
+                    folder = folder,
+                    export = export
+                }
+            end
+        end
+        -- If parsing fails, treat as string
+    end
+    return data
+end
+
 return util

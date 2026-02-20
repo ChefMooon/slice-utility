@@ -168,6 +168,7 @@ function Export()
     local exported_count = 0
     local exported_duplicates = 0
     local exported_unique = 0
+    local skipped_count = 0
     local slice_table = {}
     for i, slice in ipairs(spr.slices) do
         local bounds = slice.bounds
@@ -185,7 +186,21 @@ function Export()
         end
 
         local slice_export_path = export_path
-        local slice_subfolder = slice.data
+        local slice_data = util.parse_slice_data(slice.data)
+        local slice_subfolder = ""
+        local should_export = true
+        if type(slice_data) == "table" then
+            slice_subfolder = slice_data.folder or ""
+            should_export = slice_data.export ~= false
+        elseif type(slice_data) == "string" then
+            slice_subfolder = slice_data
+        end
+
+        if not should_export then
+            skipped_count = skipped_count + 1
+            goto continue
+        end
+
         if slice_subfolder ~= "" then
             slice_export_path = app.fs.joinPath(export_path, slice_subfolder)
             util.make_directory(slice_export_path)
@@ -254,16 +269,25 @@ function Export()
     local export_report_dialog = Dialog("Export Report")
     export_report_dialog
         :label{ label="Exported "..exported_count.." slices to "..export_path }
-        :label{ label="Unique slices: "..exported_unique }
-        :label{ label="Duplicate slices: "..exported_duplicates }
-        :button{
-            id = "ok",
-            text = "     OK     ",
-            onclick = function()
-                export_report_dialog:close()
-            end
-        }
-        :show()
+
+    if exported_unique > 0 then
+        export_report_dialog:label{ label="Unique slices: "..exported_unique }
+    end
+    if exported_duplicates > 0 then
+        export_report_dialog:label{ label="Duplicate slices: "..exported_duplicates }
+    end
+    if skipped_count > 0 then
+        export_report_dialog:label{ label="Skipped slices: "..skipped_count }
+    end
+
+    export_report_dialog:button{
+        id = "ok",
+        text = "     OK     ",
+        onclick = function()
+            export_report_dialog:close()
+        end
+    }
+    export_report_dialog:show()
 end
 
 -- This function is called when the "Set Data" button is clicked in the update_slices_dialog
