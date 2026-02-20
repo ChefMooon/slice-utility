@@ -1,5 +1,5 @@
 local lu = require('/../lib/luaunit')
-local util = require('../util')
+local util = require('../src/util')
 
 local test_data = {}
 
