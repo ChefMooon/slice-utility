@@ -37,6 +37,59 @@ function TestFindLowestIncrement_Orange()
 end
 -- TODO: Add more test cases for edge cases (e.g., non-sequential increments, empty tables, etc.)
 
+--- Tests for util.make_directory ---
+
+-- Mock app.fs for testing
+local original_app = app
+local mock_fs = {
+    dirs = {},
+    isDirectory = function(path)
+        return mock_fs.dirs[path] == true
+    end,
+    makeDirectory = function(path)
+        if path == "error" then error("Simulated error") end
+        mock_fs.dirs[path] = true
+    end
+}
+app = { fs = mock_fs }
+
+function TestMakeDirectory_EmptyPath()
+    local ok, err = util.make_directory("")
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "Path is empty or nil")
+end
+
+function TestMakeDirectory_NilPath()
+    local ok, err = util.make_directory(nil)
+    lu.assertFalse(ok)
+    lu.assertEquals(err, "Path is empty or nil")
+end
+
+function TestMakeDirectory_NewDir()
+    mock_fs.dirs["newdir"] = nil
+    local ok, err = util.make_directory("newdir")
+    lu.assertTrue(ok)
+    lu.assertNil(err)
+    lu.assertTrue(mock_fs.dirs["newdir"])
+end
+
+function TestMakeDirectory_AlreadyExists()
+    mock_fs.dirs["exists"] = true
+    local ok, err = util.make_directory("exists")
+    lu.assertTrue(ok)
+    lu.assertNil(err)
+end
+
+function TestMakeDirectory_Error()
+    mock_fs.dirs["error"] = nil
+    local ok, err = util.make_directory("error")
+    lu.assertFalse(ok)
+    lu.assertStrContains(err, "Simulated error")
+end
+
+-- Restore original app after tests
+app = original_app
+
 --- Tests for util.export_is_unique ---
 
 -- Should return true for a unique path not present in the key's entries

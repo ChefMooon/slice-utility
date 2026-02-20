@@ -2,13 +2,35 @@
 local util = {}
 
 --- Creates a directory at the specified path if it does not already exist.
--- Checks if the directory exists using app.fs.isDirectory, and creates it with app.fs.makeDirectory if not present.
--- TODO: make more robust, add tests, handle errors, etc.
+-- Checks for empty/nil path, handles errors, and returns success/failure.
+-- Uses app.fs.isDirectory to check existence and app.fs.makeDirectory to create.
+-- Returns true if directory exists or is created successfully, false and error message otherwise.
 --
--- @param path The directory path to create.
+-- @param path The directory path to create (string).
+-- @return success (boolean): true if directory exists or was created, false otherwise.
+-- @return err (string|nil): error message if failed, nil if successful.
 function util.make_directory(path)
-    if not app.fs.isDirectory(path) then
-        app.fs.makeDirectory(path)
+    -- Check for empty or nil path
+    if not path or path == "" then
+        return false, "Path is empty or nil"
+    end
+    local ok, err = pcall(function()
+        if app.fs.isDirectory(path) then
+            return true
+        else
+            app.fs.makeDirectory(path)
+            return app.fs.isDirectory(path)
+        end
+    end)
+    if ok then
+        -- If directory exists after attempt, success
+        if app.fs.isDirectory(path) then
+            return true
+        else
+            return false, "Directory creation failed"
+        end
+    else
+        return false, err or "Unknown error"
     end
 end
 

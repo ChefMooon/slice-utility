@@ -156,7 +156,11 @@ function Export()
     end
 
     -- Create export directory if it doesn't exist
-    util.make_directory(export_path)
+    local ok, err = util.make_directory(export_path)
+    if not ok then
+        app.alert("Failed to create export directory: " .. (err or "Unknown error"))
+        return
+    end
 
     -- Determine resize factor
     local resize_factor = tonumber(data.resize:sub(1, -2)) / 100
