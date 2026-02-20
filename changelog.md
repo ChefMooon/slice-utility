@@ -20,6 +20,9 @@
 ### Fixed
 - No longer overwrites slices with the same name
 
+### Removed
+- On exit message removed
+
 ## v0.3
 
 ### Fixed
