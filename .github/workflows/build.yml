@@ -23,8 +23,13 @@ jobs:
       - name: Run build script
         run: python build.py
 
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          echo "VERSION=$(python -c "import json; print(json.load(open('package.json'))['version'])")" >> $GITHUB_ENV
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aseprite-extension
+          name: slice_utility_v${{ env.VERSION }}
           path: build/slice_utility_v*.aseprite-extension
