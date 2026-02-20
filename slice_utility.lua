@@ -85,27 +85,24 @@ function Export()
     local spr = app.sprite
     if not spr then return print('No active sprite') end
 
-    local full_path = spr.filename
-    local folder = app.fs.filePath(spr.filename) or ""
-
     -- Get sprite name
     local sprite_name = app.fs.fileTitle(spr.filename) or "slice_utility_output"
 
     -- Get current datetime
     local datetime = os.date("%Y-%m-%d_%H-%M-%S")
 
-    -- Create subfolder name
-    local subfolder = sprite_name
-    local export_folder = app.fs.joinPath(folder, subfolder)
+    -- Get export base folder from user input
+    local folder = data.user_value
 
-    folder = data.user_value
+    -- Determine subfolder name (if needed)
+    local subfolder = sprite_name
+    if data.create_subfolder and data.create_subfolder_date then
+        subfolder = sprite_name .. "-" .. datetime
+    end
 
     -- Determine final export path
     local export_path = folder
     if data.create_subfolder then
-        if data.create_subfolder_date then
-            subfolder = sprite_name .. "-" .. datetime
-        end
         export_path = app.fs.joinPath(folder, subfolder)
     end
 
