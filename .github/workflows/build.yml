@@ -26,5 +26,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: slice_utility
-          path: build/slice_utility_v*.aseprite-extension
+          name: slice-utility
+          path: build/slice-utility-v*.aseprite-extension
