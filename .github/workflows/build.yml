@@ -9,6 +9,8 @@ jobs:
   build:
     runs-on: windows-latest
     if: contains(github.event.head_commit.message, '[release]')
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
 
@@ -20,6 +22,13 @@ jobs:
       - name: Install dependencies
         run: pip install --upgrade pip
 
+      - name: Extract version from package.json
+        id: get_version
+        shell: bash
+        run: |
+          VERSION="v$(cat package.json | python -c "import sys,json; print(json.load(sys.stdin)['version'])")"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Run build script
         run: python build.py
 
@@ -28,3 +37,11 @@ jobs:
         with:
           name: slice-utility
           path: build/slice-utility-v*.aseprite-extension
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/slice-utility-v*.aseprite-extension
+          generate_release_notes: true
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: ${{ steps.get_version.outputs.version }}
