@@ -20,6 +20,11 @@ Export options:
 
 **Update Slice Data** updates the **color** and **User Data** of all slices within the selected area.
 
+## Keyboard Shortcuts
+
+- **Ctrl+Shift+E** — Export Slices
+- **Ctrl+Shift+W** — Update Slice Data
+
 ## Duplicate Slice Handling
 
 When multiple slices share the same name or subfolder, each exported file is automatically given a unique name by appending the lowest available increment (e.g. `_1`, `_2`). No slices are skipped or silently overwritten.
@@ -37,7 +42,11 @@ For full details see [Duplicate Slice Handling Documentation](docs/duplicate-sli
 **Export Slices**
 
 <p align="center">
-  <img src="img/v0.2_export_slices.png" alt="Slice Utility - Export Slices">
+  <img src="img/v0.5.0_export_slices.png" alt="Slice Utility - Export Slices">
+</p>
+
+<p align="center">
+  <img src="img/v0.5.0_export_slices_overwrite_folder.png" alt="Slice Utility - Export Slices">
 </p>
 
 **Update Slice Data**
