@@ -31,10 +31,10 @@ export_dialog
         options={ "100%", "200%", "300%", "400%", "500%", "600%", "700%", "800%", "900%", "1000%" }
     }
     :separator{}
-    :button{ id="export", text="Export", focus=true, onclick=function()
+    :button{ id="export", text="   Export   ", focus=true, onclick=function()
         Export()
     end }
-    :button{ id="cancel", text="Cancel", onclick = function()
+    :button{ id="cancel", text="   Cancel   ", onclick = function()
         export_dialog:close()
     end }
 
@@ -145,8 +145,8 @@ function Export()
         dlg:label{label="The export folder already exists."}
         dlg:label{label="Do you want to overwrite its contents?"}
         dlg:separator{}
-        dlg:button{id="yes", text="Yes"}
-        dlg:button{id="no", text="No"}
+        dlg:button{id="yes", text="   Yes   "}
+        dlg:button{id="no", text="   No   "}
         dlg:show()
         local result = dlg.data
         if not result.yes then
