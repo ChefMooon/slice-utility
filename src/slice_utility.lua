@@ -145,18 +145,43 @@ function Export()
     end
 
     -- Check if export folder exists and prompt user TODO: extract to separate function
+    local folder_action = "Overwrite"  -- Default action
     if app.fs.isDirectory(export_path) then
         local dlg = Dialog("Folder Exists")
         dlg:label{label="The export folder already exists."}
-        dlg:label{label="Do you want to overwrite its contents?"}
         dlg:separator{}
-        dlg:button{id="yes", text="   Yes   "}
-        dlg:button{id="no", text="   No   "}
+        dlg:radio{
+            id="overwrite",
+            text="Overwrite (merge files, keep existing)",
+            selected=true,
+            onclick=function()
+                folder_action = "Overwrite"
+            end
+        }
+        dlg:radio{
+            id="delete_replace",
+            text="Delete & Replace (clear folder first)",
+            selected=false,
+            onclick=function()
+                folder_action = "Delete & Replace"
+            end
+        }
+        dlg:separator{}
+        dlg:button{id="ok", text="   OK   "}
+        dlg:button{id="cancel", text="   Cancel   "}
         dlg:show()
         local result = dlg.data
-        if not result.yes then
-            app.alert("Export cancelled.")
+        if result.cancel then
             return
+        end
+        
+        -- If user selected "Delete & Replace", delete directory contents first
+        if folder_action == "Delete & Replace" then
+            local ok, err = util.delete_directory_contents(export_path)
+            if not ok then
+                app.alert("Failed to delete folder contents: " .. (err or "Unknown error"))
+                return
+            end
         end
     end
 

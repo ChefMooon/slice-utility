@@ -164,4 +164,53 @@ function util.parse_slice_data(data)
     return data
 end
 
+--- Recursively deletes all files and subdirectories inside a directory.
+-- Does not delete the directory itself, only its contents.
+-- Uses app.fs functions to iterate and delete directory entries.
+--
+-- @param path The directory path whose contents should be deleted (string).
+-- @return success (boolean): true if deletion succeeded, false otherwise.
+-- @return err (string|nil): error message if failed, nil if successful.
+function util.delete_directory_contents(path)
+    if not path or path == "" then
+        return false, "Path is empty or nil"
+    end
+    
+    local ok, err = pcall(function()
+        -- List all files and directories in the path
+        local entries = app.fs.listFiles(path)
+        if not entries then
+            return true -- Directory is empty or already doesn't exist
+        end
+        
+        -- Delete each entry
+        for _, entry in ipairs(entries) do
+            local full_path = app.fs.joinPath(path, entry)
+            
+            if app.fs.isDirectory(full_path) then
+                -- Recursively delete subdirectory
+                util.delete_directory_contents(full_path)
+                -- After deleting contents, remove the empty directory
+                local _, dir_err = os.remove(full_path)
+                if dir_err then
+                    error("Failed to delete directory " .. full_path .. ": " .. tostring(dir_err))
+                end
+            else
+                -- Delete file
+                local _, file_err = os.remove(full_path)
+                if file_err then
+                    error("Failed to delete file " .. full_path .. ": " .. tostring(file_err))
+                end
+            end
+        end
+        return true
+    end)
+    
+    if ok then
+        return true
+    else
+        return false, err or "Unknown error during deletion"
+    end
+end
+
 return util
