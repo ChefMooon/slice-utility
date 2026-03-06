@@ -268,6 +268,203 @@ function TestParseSliceData_TableString_Empty()
     lu.assertEquals(result, { folder = "", export = true })
 end
 
+--- Tests for util.get_file_size ---
+
+--- Should return 0 for non-existent file
+function TestGetFileSize_NonExistent()
+    local size = util.get_file_size("/nonexistent/path/to/file.png")
+    lu.assertEquals(size, 0)
+end
+
+--- Should return 0 for empty path
+function TestGetFileSize_EmptyPath()
+    local size = util.get_file_size("")
+    lu.assertEquals(size, 0)
+end
+
+--- Should return 0 for nil path
+function TestGetFileSize_NilPath()
+    local size = util.get_file_size(nil)
+    lu.assertEquals(size, 0)
+end
+
+--- Tests for util.calculate_export_summary ---
+
+--- Should calculate correct summary from export details
+function TestCalculateExportSummary_BasicExport()
+    local export_details = {
+        { slice_name = "block/yellow", action = "exported", file_path = "block/yellow.png", file_size = 1024 },
+        { slice_name = "block/red", action = "exported", file_path = "block/red.png", file_size = 2048 },
+        { slice_name = "block/blue", action = "duplicate_renamed", file_path = "block/blue_1.png", file_size = 1024, original_name = "block/blue" },
+        { slice_name = "block/green", action = "skipped_export_false", file_path = "", file_size = 0 }
+    }
+    local summary = util.calculate_export_summary(export_details, 4, 5000)
+    lu.assertEquals(summary.total_slices, 4)
+    lu.assertEquals(summary.exported_count, 3)
+    lu.assertEquals(summary.unique_count, 2)
+    lu.assertEquals(summary.duplicates_count, 1)
+    lu.assertEquals(summary.skipped_count, 1)
+    lu.assertEquals(summary.total_file_size, 4096)
+    lu.assertEquals(summary.avg_file_size, 1365)
+    lu.assertEquals(summary.export_duration_ms, 5000)
+end
+    local export_details = {
+        { slice_name = "block/yellow", action = "exported", file_path = "block/yellow.png", file_size = 1024 },
+        { slice_name = "block/red", action = "exported", file_path = "block/red.png", file_size = 2048 },
+        { slice_name = "block/blue", action = "duplicate_renamed", file_path = "block/blue_1.png", file_size = 1024, original_name = "block/blue" },
+        { slice_name = "block/green", action = "skipped_export_false", file_path = "", file_size = 0 }
+    }
+    local summary = util.calculate_export_summary(export_details, 4, 5000)
+    lu.assertEquals(summary.total_slices, 4)
+    lu.assertEquals(summary.exported_count, 3)
+    lu.assertEquals(summary.unique_count, 2)
+    lu.assertEquals(summary.duplicates_count, 1)
+    lu.assertEquals(summary.skipped_count, 1)
+    lu.assertEquals(summary.total_file_size, 4096)
+    lu.assertEquals(summary.avg_file_size, 1365)
+    lu.assertEquals(summary.export_duration_ms, 5000)
+end
+
+--- Should handle empty export details
+function TestCalculateExportSummary_EmptyDetails()
+    local summary = util.calculate_export_summary({}, 10, 1000)
+    lu.assertEquals(summary.total_slices, 10)
+    lu.assertEquals(summary.exported_count, 0)
+    lu.assertEquals(summary.unique_count, 0)
+    lu.assertEquals(summary.duplicates_count, 0)
+    lu.assertEquals(summary.skipped_count, 0)
+    lu.assertEquals(summary.total_file_size, 0)
+    lu.assertEquals(summary.avg_file_size, 0)
+end
+
+--- Should handle nil export details
+function TestCalculateExportSummary_NilDetails()
+    local summary = util.calculate_export_summary(nil, 5, 0)
+    lu.assertEquals(summary.total_slices, 5)
+    lu.assertEquals(summary.exported_count, 0)
+end
+
+--- Tests for util.format_bytes ---
+
+--- Should format bytes correctly
+function TestFormatBytes_Bytes()
+    lu.assertEquals(util.format_bytes(0), "0 B")
+    lu.assertEquals(util.format_bytes(512), "512 B")
+    lu.assertEquals(util.format_bytes(1023), "1023 B")
+end
+
+--- Should format kilobytes
+function TestFormatBytes_Kilobytes()
+    lu.assertEquals(util.format_bytes(1024), "1.0 KB")
+    lu.assertEquals(util.format_bytes(1536), "1.5 KB")
+    lu.assertEquals(util.format_bytes(1048575), "1024.0 KB")
+end
+
+--- Should format megabytes
+function TestFormatBytes_Megabytes()
+    lu.assertEquals(util.format_bytes(1048576), "1.0 MB")
+    lu.assertEquals(util.format_bytes(5242880), "5.0 MB")
+end
+
+--- Tests for ReportFormatter ---
+
+--- Should format summary correctly
+function TestReportFormatter_FormatSummary()
+    local formatter = util.ReportFormatter:new()
+    local summary = {
+        total_slices = 5,
+        exported_count = 3,
+        unique_count = 2,
+        duplicates_count = 1,
+        skipped_count = 2,
+        total_file_size = 5120,
+        avg_file_size = 1706,
+        export_duration_ms = 2500
+    }
+    local formatted = formatter:format_summary(summary)
+    lu.assertNotNil(formatted)
+    lu.assertStrContains(formatted, "Total slices on sprite: 5")
+    lu.assertStrContains(formatted, "Total exported: 3")
+    lu.assertStrContains(formatted, "Unique: 2")
+    lu.assertStrContains(formatted, "Duplicates (renamed): 1")
+    lu.assertStrContains(formatted, "Total skipped: 2")
+end
+
+--- Should format detail row for exported slice
+function TestReportFormatter_FormatDetailRow_Exported()
+    local formatter = util.ReportFormatter:new()
+    local entry = {
+        slice_name = "block/yellow",
+        action = "exported",
+        file_path = "block/yellow.png",
+        file_size = 1024
+    }
+    local formatted = formatter:format_detail_row(entry)
+    lu.assertNotNil(formatted)
+    lu.assertStrContains(formatted, "block/yellow")
+    lu.assertStrContains(formatted, "Exported")
+end
+
+--- Should format detail row for duplicate slice with original name
+function TestReportFormatter_FormatDetailRow_Duplicate()
+    local formatter = util.ReportFormatter:new()
+    local entry = {
+        slice_name = "block/red_1",
+        action = "duplicate_renamed",
+        file_path = "block/red_1.png",
+        file_size = 2048,
+        original_name = "block/red"
+    }
+    local formatted = formatter:format_detail_row(entry)
+    lu.assertNotNil(formatted)
+    lu.assertStrContains(formatted, "Duplicate (renamed)")
+    lu.assertStrContains(formatted, "block/red")
+    lu.assertStrContains(formatted, "block/red_1")
+end
+
+--- Should build complete report
+function TestReportFormatter_BuildFullReport()
+    local formatter = util.ReportFormatter:new()
+    local summary = {
+        total_slices = 2,
+        exported_count = 2,
+        unique_count = 2,
+        duplicates_count = 0,
+        skipped_count = 0,
+        total_file_size = 2048,
+        avg_file_size = 1024,
+        export_duration_ms = 1000
+    }
+    local export_details = {
+        { slice_name = "block/yellow", action = "exported", file_path = "block/yellow.png", file_size = 1024 },
+        { slice_name = "block/red", action = "exported", file_path = "block/red.png", file_size = 1024 }
+    }
+    local report = formatter:build_full_report(summary, export_details)
+    lu.assertNotNil(report)
+    lu.assertStrContains(report, "EXPORT SUMMARY")
+    lu.assertStrContains(report, "EXPORT DETAILS")
+    lu.assertStrContains(report, "block/yellow")
+    lu.assertStrContains(report, "block/red")
+end
+
+--- Should handle empty export details in full report
+function TestReportFormatter_BuildFullReport_Empty()
+    local formatter = util.ReportFormatter:new()
+    local summary = {
+        total_slices = 0,
+        exported_count = 0,
+        unique_count = 0,
+        duplicates_count = 0,
+        skipped_count = 0,
+        total_file_size = 0,
+        avg_file_size = 0,
+        export_duration_ms = 0
+    }
+    local report = formatter:build_full_report(summary, {})
+    lu.assertNotNil(report)
+    lu.assertStrContains(report, "no exports")
+end
+
 -- luaunit runner. Must stay at the end of the file to run tests. New tests go above this line.
 local runner = lu.LuaUnit.new()
 runner:setOutputType("text")

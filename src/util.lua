@@ -244,4 +244,189 @@ function util.get_existing_files(base_path)
     return files
 end
 
+--- Returns the file size in bytes. Returns 0 if file does not exist or cannot be accessed.
+--
+-- @param path The file path (string).
+-- @return The file size in bytes (number), or 0 if file cannot be accessed.
+function util.get_file_size(path)
+    if not path or path == "" then
+        return 0
+    end
+    local ok, err = pcall(function()
+        local file = io.open(path, "rb")
+        if file then
+            local size = file:seek("end")
+            file:close()
+            return size or 0
+        end
+        return 0
+    end)
+    if ok then
+        return err or 0
+    else
+        return 0
+    end
+end
+
+--- Calculates summary statistics from export details.
+-- Aggregates counts and file sizes in a single pass.
+--
+-- @param export_details A list of export detail entries, each with: slice_name, action, file_path, file_size, original_name (optional).
+-- @param total_sprite_slices The total number of slices in the sprite (number).
+-- @return A table with fields: total_slices, exported_count, unique_count, duplicates_count, skipped_count, total_file_size, avg_file_size, export_duration_ms.
+function util.calculate_export_summary(export_details, total_sprite_slices, export_duration_ms)
+    local summary = {
+        total_slices = total_sprite_slices or 0,
+        exported_count = 0,
+        unique_count = 0,
+        duplicates_count = 0,
+        skipped_count = 0,
+        total_file_size = 0,
+        avg_file_size = 0,
+        export_duration_ms = export_duration_ms or 0
+    }
+    
+    if not export_details or #export_details == 0 then
+        return summary
+    end
+    
+    -- Single pass through export_details
+    for _, entry in ipairs(export_details) do
+        if entry.action == "exported" then
+            summary.exported_count = summary.exported_count + 1
+            summary.unique_count = summary.unique_count + 1
+        elseif entry.action == "duplicate_renamed" then
+            summary.exported_count = summary.exported_count + 1
+            summary.duplicates_count = summary.duplicates_count + 1
+        elseif entry.action == "skipped_export_false" then
+            summary.skipped_count = summary.skipped_count + 1
+        elseif entry.action == "skipped_exists" then
+            summary.skipped_count = summary.skipped_count + 1
+        end
+        
+        -- Accumulate file sizes
+        local file_size = entry.file_size or 0
+        summary.total_file_size = summary.total_file_size + file_size
+    end
+    
+    -- Calculate average file size
+    if summary.exported_count > 0 then
+        summary.avg_file_size = math.floor(summary.total_file_size / summary.exported_count)
+    end
+    
+    return summary
+end
+
+--- ReportFormatter class for formatting export reports.
+-- Provides methods to format summary statistics and detail entries for display.
+local ReportFormatter = {}
+ReportFormatter.__index = ReportFormatter
+
+function ReportFormatter:new()
+    return setmetatable({}, ReportFormatter)
+end
+
+--- Formats a summary statistics block as a multi-line string.
+--
+-- @param summary A table with fields: total_slices, exported_count, unique_count, duplicates_count, skipped_count, total_file_size, avg_file_size, export_duration_ms.
+-- @return A formatted multi-line string suitable for display.
+function ReportFormatter:format_summary(summary)
+    local lines = {}
+    table.insert(lines, "=== EXPORT SUMMARY ===")
+    table.insert(lines, "")
+    table.insert(lines, "Total slices on sprite: " .. summary.total_slices)
+    table.insert(lines, "Total exported: " .. summary.exported_count)
+    table.insert(lines, "  - Unique: " .. summary.unique_count)
+    table.insert(lines, "  - Duplicates (renamed): " .. summary.duplicates_count)
+    table.insert(lines, "Total skipped: " .. summary.skipped_count)
+    
+    if summary.exported_count > 0 then
+        table.insert(lines, "Total file size: " .. util.format_bytes(summary.total_file_size))
+        table.insert(lines, "Average file size: " .. util.format_bytes(summary.avg_file_size))
+    end
+    
+    if summary.export_duration_ms > 0 then
+        local seconds = summary.export_duration_ms / 1000
+        table.insert(lines, "Export duration: " .. string.format("%.2f", seconds) .. "s")
+    end
+    
+    return table.concat(lines, "\n")
+end
+
+--- Formats a single detail entry as a single-line string.
+--
+-- @param entry A detail table with fields: slice_name, action, file_path, file_size, original_name (optional).
+-- @return A formatted single-line string suitable for display in a list.
+function ReportFormatter:format_detail_row(entry)
+    local action_str = ""
+    if entry.action == "exported" then
+        action_str = "✓ Exported"
+    elseif entry.action == "duplicate_renamed" then
+        action_str = "✓ Duplicate (renamed)"
+        if entry.original_name then
+            action_str = action_str .. ": " .. entry.original_name .. " → " .. entry.slice_name
+        end
+    elseif entry.action == "skipped_export_false" then
+        action_str = "✗ Skipped (export=false)"
+    elseif entry.action == "skipped_exists" then
+        action_str = "✗ Skipped (already exists)"
+    else
+        action_str = "? " .. entry.action
+    end
+    
+    local size_str = entry.file_size and (" [" .. util.format_bytes(entry.file_size) .. "]") or ""
+    return "  " .. entry.slice_name .. ": " .. action_str .. size_str
+end
+
+--- Builds a complete formatted report including summary and all detail rows.
+--
+-- @param summary A summary statistics table from calculate_export_summary().
+-- @param export_details A list of export detail entries.
+-- @return A complete formatted report as a multi-line string.
+function ReportFormatter:build_full_report(summary, export_details)
+    local lines = {}
+    
+    -- Add summary section
+    table.insert(lines, self:format_summary(summary))
+    table.insert(lines, "")
+    table.insert(lines, "=== EXPORT DETAILS ===")
+    table.insert(lines, "")
+    
+    -- Add detail rows
+    if export_details and #export_details > 0 then
+        for _, entry in ipairs(export_details) do
+            table.insert(lines, self:format_detail_row(entry))
+        end
+    else
+        table.insert(lines, "  (no exports)")
+    end
+    
+    return table.concat(lines, "\n")
+end
+
+--- Formats bytes into human-readable size (e.g., "1.5 KB", "2.3 MB").
+--
+-- @param bytes The number of bytes (number).
+-- @return A formatted string representation (e.g., "1.5 KB").
+function util.format_bytes(bytes)
+    if bytes == 0 then return "0 B" end
+    
+    local units = { "B", "KB", "MB", "GB" }
+    local unit_index = 1
+    local size = bytes
+    
+    while size >= 1024 and unit_index < #units do
+        size = size / 1024
+        unit_index = unit_index + 1
+    end
+    
+    if unit_index == 1 then
+        return string.format("%d %s", size, units[unit_index])
+    else
+        return string.format("%.1f %s", size, units[unit_index])
+    end
+end
+
+util.ReportFormatter = ReportFormatter
+
 return util

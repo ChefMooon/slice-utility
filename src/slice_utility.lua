@@ -83,9 +83,88 @@ update_slices_dialog
 
 ------------------Slice Utility Main Functions Start------------------
 
+-- Helper function to show export report with optional details
+-- Displays summary stats and provides button to show detailed report
+function show_export_report(export_path, total_sprite_slices, export_details, export_duration_ms)
+    local local_export_details = export_details  -- Capture for closure
+    local local_export_duration = export_duration_ms
+    local local_total_slices = total_sprite_slices
+    
+    -- Calculate summary stats (lazy evaluation - only when needed)
+    local summary_stats = nil
+    
+    -- Create main export report dialog
+    local export_report_dialog = Dialog("Export Report")
+    export_report_dialog
+        :label{ label="Exported to: " .. export_path }
+        :separator{}
+    
+    -- Add summary counters dynamically
+    local exported_count = 0
+    local unique_count = 0
+    local duplicates_count = 0
+    local skipped_count = 0
+    
+    for _, entry in ipairs(export_details) do
+        if entry.action == "exported" then
+            exported_count = exported_count + 1
+            unique_count = unique_count + 1
+        elseif entry.action == "duplicate_renamed" then
+            exported_count = exported_count + 1
+            duplicates_count = duplicates_count + 1
+        elseif entry.action == "skipped_export_false" or entry.action == "skipped_exists" then
+            skipped_count = skipped_count + 1
+        end
+    end
+    
+    export_report_dialog
+        :label{ label="Total exported: " .. exported_count }
+    
+    if unique_count > 0 then
+        export_report_dialog:label{ label="  Unique: " .. unique_count }
+    end
+    if duplicates_count > 0 then
+        export_report_dialog:label{ label="  Duplicates (renamed): " .. duplicates_count }
+    end
+    if skipped_count > 0 then
+        export_report_dialog:label{ label="Total skipped: " .. skipped_count }
+    end
+    
+    export_report_dialog:separator{}
+    
+    -- Add buttons
+    export_report_dialog:button{
+        id = "show_details",
+        text = "Show Details",
+        onclick = function()
+            -- Lazy-load summary stats only when details are requested
+            if not summary_stats then
+                summary_stats = util.calculate_export_summary(local_export_details, local_total_slices, local_export_duration)
+            end
+            
+            -- Print full report to console
+            local formatter = util.ReportFormatter:new()
+            local full_report = formatter:build_full_report(summary_stats, local_export_details)
+            print(full_report)
+        end
+    }
+    
+    export_report_dialog:button{
+        id = "ok",
+        text = "     OK     ",
+        onclick = function()
+            export_report_dialog:close()
+        end
+    }
+    
+    export_report_dialog:show()
+end
+
 -- This function is called when the "Export" button is clicked in the export_dialog
 -- It will loop through all slices in the current sprite and export them as individual PNG files
 function Export()
+    local export_start_time = os.time() * 1000 + (os.clock() % 1) * 1000  -- Approximate milliseconds
+    
     local data = export_dialog.data
     local spr = app.sprite
     if not spr then return print('No active sprite') end
@@ -209,6 +288,10 @@ function Export()
     -- Determine resize factor
     local resize_factor = tonumber(data.resize:sub(1, -2)) / 100
 
+    -- Initialize export details collection
+    local export_details = {}
+    local total_sprite_slices = #spr.slices
+
     -- Loop through slices and export
     local exported_count = 0
     local exported_duplicates = 0
@@ -244,6 +327,12 @@ function Export()
 
         if not should_export then
             skipped_count = skipped_count + 1
+            table.insert(export_details, {
+                slice_name = slice.name,
+                action = "skipped_export_false",
+                file_path = "",
+                file_size = 0
+            })
             goto continue
         end
 
@@ -262,11 +351,18 @@ function Export()
         if folder_action == "New Only" then
             if existing_files[slice_key .. ".png"] then
                 skipped_by_existing_count = skipped_by_existing_count + 1
+                table.insert(export_details, {
+                    slice_name = slice.name,
+                    action = "skipped_exists",
+                    file_path = app.fs.joinPath(slice_subfolder ~= "" and slice_subfolder or ".", slice_name .. ".png"),
+                    file_size = 0
+                })
                 goto continue
             end
         end
 
         local export_data = util.get_export_data(slice_key)
+        local original_name = nil
 
         -- Ensure the value at this key is a list (array)
         if not slice_table[export_data.key] then
@@ -283,6 +379,7 @@ function Export()
             end
             table.insert(slice_table[export_data.key], { path = export_data.path, increment = lowest_increment })
             exported_duplicates = exported_duplicates + 1
+            original_name = slice.name  -- Track original name for duplicate rename
         end
 
         local file_path = app.fs.joinPath(slice_export_path, slice_name)
@@ -310,6 +407,19 @@ function Export()
 
         exported_count = exported_count + 1
 
+        -- Collect export details
+        local action = original_name and "duplicate_renamed" or "exported"
+        local relative_path = slice_subfolder ~= "" and slice_subfolder .. "/" .. slice_name or slice_name
+        local file_size = util.get_file_size(filename)
+        
+        table.insert(export_details, {
+            slice_name = slice.name,
+            action = action,
+            file_path = relative_path .. ".png",
+            file_size = file_size,
+            original_name = original_name
+        })
+
         ::continue::
     end
 
@@ -319,32 +429,12 @@ function Export()
     -- Close the export dialog
     export_dialog:close()
 
-    -- Show alert with export results
-    local export_report_dialog = Dialog("Export Report")
-    export_report_dialog
-        :label{ label="Exported "..exported_count.." slices to "..export_path }
+    -- Calculate export duration
+    local export_end_time = os.time() * 1000 + (os.clock() % 1) * 1000
+    local export_duration_ms = math.max(0, export_end_time - export_start_time)
 
-    if exported_unique > 0 then
-        export_report_dialog:label{ label="Unique slices: "..exported_unique }
-    end
-    if exported_duplicates > 0 then
-        export_report_dialog:label{ label="Duplicate slices: "..exported_duplicates }
-    end
-    if skipped_count > 0 then
-        export_report_dialog:label{ label="Skipped (export=false): "..skipped_count }
-    end
-    if skipped_by_existing_count > 0 then
-        export_report_dialog:label{ label="Skipped (already exist): "..skipped_by_existing_count }
-    end
-
-    export_report_dialog:button{
-        id = "ok",
-        text = "     OK     ",
-        onclick = function()
-            export_report_dialog:close()
-        end
-    }
-    export_report_dialog:show()
+    -- Show export report with details support
+    show_export_report(export_path, total_sprite_slices, export_details, export_duration_ms)
 end
 
 -- This function is called when the "Set Data" button is clicked in the update_slices_dialog
