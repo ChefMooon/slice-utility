@@ -404,7 +404,12 @@ function func.export_slices()
         }
     end
     
-    export_dialog:show()
+    local dialogWidth, dialogHeight = 350, 135
+    local xPos = app.window.width / 2 - dialogWidth / 2
+    local yPos = app.window.height / 2 - dialogHeight / 2
+    export_dialog:show{
+        bounds=Rectangle(xPos, yPos, dialogWidth, dialogHeight)
+    }
 end
 
 function func.update_slices()
