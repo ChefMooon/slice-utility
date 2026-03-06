@@ -1,8 +1,6 @@
 local slice_utility = require("slice_utility")
 
 function init(plugin)
-  print("Aseprite is initializing Slice Utility")
-
   -- "plugin.preferences" as a table with fields for the plugin
   -- (these fields are saved between sessions)
   if plugin.preferences.count == nil then
