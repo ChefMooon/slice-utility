@@ -213,4 +213,35 @@ function util.delete_directory_contents(path)
     end
 end
 
+--- Recursively lists all files in a directory and returns them with paths relative to the base.
+-- Files at the base level are returned as "filename.png".
+-- Files in subfolders are returned as "subfolder/filename.png".
+-- Returns a table where keys are relative file paths (string) and values are true for quick lookup.
+--
+-- @param base_path The base directory path to scan (string).
+-- @return A table with relative file paths as keys, all with value true.
+function util.get_existing_files(base_path)
+    local files = {}
+    
+    -- Helper function to recursively walk directory
+    local function walk(current_path, relative_prefix)
+        local entries = app.fs.listFiles(current_path) or {}
+        for _, entry in ipairs(entries) do
+            local full_path = app.fs.joinPath(current_path, entry)
+            local relative_path = relative_prefix .. entry
+            
+            if app.fs.isDirectory(full_path) then
+                -- Recurse into subdirectory (use forward slash as separator for consistency)
+                walk(full_path, relative_path .. "/")
+            else
+                -- Add file to results table
+                files[relative_path] = true
+            end
+        end
+    end
+    
+    walk(base_path, "")
+    return files
+end
+
 return util

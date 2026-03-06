@@ -159,6 +159,14 @@ function Export()
             end
         }
         dlg:radio{
+            id="new_only",
+            text="New Only (skip existing files)",
+            selected=false,
+            onclick=function()
+                folder_action = "New Only"
+            end
+        }
+        dlg:radio{
             id="delete_replace",
             text="Delete & Replace (clear folder first)",
             selected=false,
@@ -185,6 +193,12 @@ function Export()
         end
     end
 
+    -- If "New Only" mode, get list of existing files to skip during export
+    local existing_files = {}
+    if folder_action == "New Only" then
+        existing_files = util.get_existing_files(export_path)
+    end
+
     -- Create export directory if it doesn't exist
     local ok, err = util.make_directory(export_path)
     if not ok then
@@ -200,6 +214,7 @@ function Export()
     local exported_duplicates = 0
     local exported_unique = 0
     local skipped_count = 0
+    local skipped_by_existing_count = 0
     local slice_table = {}
     for i, slice in ipairs(spr.slices) do
         local bounds = slice.bounds
@@ -241,6 +256,14 @@ function Export()
         local slice_key = slice_name
         if slice_subfolder ~= "" then
             slice_key = slice_subfolder .. "/" .. slice.name
+        end
+
+        -- If "New Only" mode, check if file already exists using slice_key
+        if folder_action == "New Only" then
+            if existing_files[slice_key .. ".png"] then
+                skipped_by_existing_count = skipped_by_existing_count + 1
+                goto continue
+            end
         end
 
         local export_data = util.get_export_data(slice_key)
@@ -308,7 +331,10 @@ function Export()
         export_report_dialog:label{ label="Duplicate slices: "..exported_duplicates }
     end
     if skipped_count > 0 then
-        export_report_dialog:label{ label="Skipped slices: "..skipped_count }
+        export_report_dialog:label{ label="Skipped (export=false): "..skipped_count }
+    end
+    if skipped_by_existing_count > 0 then
+        export_report_dialog:label{ label="Skipped (already exist): "..skipped_by_existing_count }
     end
 
     export_report_dialog:button{
