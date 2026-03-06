@@ -22,11 +22,13 @@ jobs:
       - name: Install dependencies
         run: pip install --upgrade pip
 
-      - name: Extract version from package.json
-        id: get_version
+      - name: Extract info from package.json
+        id: pkg
         shell: bash
         run: |
+          NAME=$(cat package.json | python -c "import sys,json; print(json.load(sys.stdin)['name'])")
           VERSION="v$(cat package.json | python -c "import sys,json; print(json.load(sys.stdin)['version'])")"
+          echo "name=$NAME" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Run build script
@@ -35,13 +37,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: slice-utility
-          path: build/slice-utility-v*.aseprite-extension
+          name: ${{ steps.pkg.outputs.name }}
+          path: build/${{ steps.pkg.outputs.name }}-${{ steps.pkg.outputs.version }}.aseprite-extension
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: build/slice-utility-v*.aseprite-extension
+          files: build/${{ steps.pkg.outputs.name }}-${{ steps.pkg.outputs.version }}.aseprite-extension
           generate_release_notes: true
-          tag_name: ${{ steps.get_version.outputs.version }}
-          name: ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ steps.pkg.outputs.version }}
+          name: ${{ steps.pkg.outputs.version }}

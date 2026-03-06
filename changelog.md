@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0
+
+### Added
+- Export report functionality with detailed statistics and file size calculations
+- File selection dialog for choosing export location
+
+### Changed
+- Improved button text formatting in dialogs for better visibility
+- Improved folder overwrite options: "Overwrite", "New Only", and "Delete & Replace"
+
 ## v0.4
 
 ### Added
