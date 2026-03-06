@@ -6,8 +6,13 @@ local default_color = app.preferences.slices.default_color -- Stores default on 
 
 local export_dialog = Dialog("Slice Export")
 export_dialog
-    :entry{ id="user_value",
-        label="Export Location:"
+    :file{
+        id="export_location",
+        label="Export Location:",
+        title="Select Export Folder",
+        open=true,
+        save=false,
+        entry=true
     }
     :check{
         id="create_subfolder",
@@ -92,7 +97,7 @@ function Export()
     local datetime = os.date("%Y-%m-%d_%H-%M-%S")
 
     -- Get export base folder from user input
-    local folder = data.user_value
+    local folder = data.export_location
 
     -- Determine subfolder name (if needed)
     local subfolder = sprite_name
@@ -377,9 +382,11 @@ function func.export_slices()
     local sprite = app.sprite
     if not sprite then return app.alert('No active sprite') end
     if #sprite.slices == 0 then return app.alert('No slices found in active sprite') end
+    local sprite_path = app.fs.filePath(sprite.filename) or ""
     export_dialog:modify {
-        id = "user_value",
-        text = app.fs.filePath(sprite.filename) or ""
+        id = "export_location",
+        basepath = sprite_path,
+        filename = sprite_path
     }
 
     -- Check if there is a selection and enable/disable "Selection Only" option accordingly
