@@ -14,23 +14,28 @@ function util.make_directory(path)
     if not path or path == "" then
         return false, "Path is empty or nil"
     end
-    local ok, err = pcall(function()
+    local ok, result = pcall(function()
         if app.fs.isDirectory(path) then
-            return true
+            return "exists"
         else
             app.fs.makeDirectory(path)
-            return app.fs.isDirectory(path)
+            if app.fs.isDirectory(path) then
+                return "created"
+            else
+                return "failed"
+            end
         end
     end)
     if ok then
-        -- If directory exists after attempt, success
-        if app.fs.isDirectory(path) then
+        -- ok is true means no error in pcall
+        if result == "exists" or result == "created" then
             return true
         else
             return false, "Directory creation failed"
         end
     else
-        return false, err or "Unknown error"
+        -- ok is false means an error occurred in pcall, result contains error message
+        return false, result or "Unknown error"
     end
 end
 
